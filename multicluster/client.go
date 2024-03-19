@@ -110,7 +110,8 @@ func (m *gatedStatusWriter) Patch(ctx context.Context, obj client.Object, patch 
 // ClientOptions the options for creating multi-cluster gatedClient
 type ClientOptions struct {
 	client.Options
-	ClusterGateway ClusterGatewayClientOptions
+	ClusterGateway             ClusterGatewayClientOptions
+	DisableRemoteClusterClient bool
 }
 
 // ClusterGatewayClientOptions the options for creating the gateway client
@@ -135,10 +136,14 @@ type ClusterGatewayClientOptions struct {
 func NewClient(config *rest.Config, options ClientOptions) (client.Client, error) {
 	wrapped := rest.CopyConfig(config)
 	wrapped.Wrap(NewTransportWrapper())
-	if len(options.ClusterGateway.URL) == 0 {
-		return client.New(wrapped, options.Options)
+	constructor := NewRemoteClusterClient
+	if options.DisableRemoteClusterClient {
+		constructor = client.New
 	}
-	base, err := client.New(config, options.Options)
+	if len(options.ClusterGateway.URL) == 0 {
+		return constructor(wrapped, options.Options)
+	}
+	base, err := constructor(config, options.Options)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +160,7 @@ func NewClient(config *rest.Config, options ClientOptions) (client.Client, error
 		// no err will be returned here
 		_ = clustergatewayv1alpha1.AddToScheme(options.Options.Scheme)
 	}
-	gateway, err := client.New(wrapped, options.Options)
+	gateway, err := constructor(wrapped, options.Options)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +180,8 @@ var DefaultClusterGatewayClientOptions = ClusterGatewayClientOptions{}
 // NewDefaultClient create default client with default DefaultClusterGatewayClientOptions
 func NewDefaultClient(config *rest.Config, options client.Options) (client.Client, error) {
 	return NewClient(config, ClientOptions{
-		Options:        options,
-		ClusterGateway: DefaultClusterGatewayClientOptions,
+		Options:                    options,
+		ClusterGateway:             DefaultClusterGatewayClientOptions,
+		DisableRemoteClusterClient: DefaultDisableRemoteClusterClient,
 	})
 }

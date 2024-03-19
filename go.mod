@@ -7,6 +7,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.8.0
 	github.com/go-stack/stack v1.8.1
 	github.com/google/go-cmp v0.5.9
+	github.com/jellydator/ttlcache/v3 v3.0.1
 	github.com/klauspost/compress v1.15.12
 	github.com/oam-dev/cluster-gateway v1.7.0-alpha.1
 	github.com/onsi/ginkgo/v2 v2.1.6
